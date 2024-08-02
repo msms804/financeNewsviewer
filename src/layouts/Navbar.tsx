@@ -1,6 +1,10 @@
 import React from 'react'
+import { auth } from '../firebase'
 
 export const Navbar = () => {
+    const logOut = () => {
+        auth.signOut();
+    }
 
     return (
         <div className='flex flex-row m-3 items-center justify-between'>
@@ -18,6 +22,9 @@ export const Navbar = () => {
                     </svg>
 
                 </div>
+                <button onClick={logOut} className='bg-indigo-600 text-white text-xs p-2 rounded-md'>
+                    로그아웃
+                </button>
             </div>
         </div>
     )
