@@ -1,11 +1,17 @@
+import { FirebaseError } from 'firebase/app';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import React from 'react'
 import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { auth } from '../firebase';
+import { GithubBtn } from '../components/GithubBtn';
 
 export const Login = () => {
     const [isLoading, setLoading] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const navigate = useNavigate();
 
     const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { target: { name, value }, } = e;
@@ -15,8 +21,20 @@ export const Login = () => {
             setPassword(value);
         }
     }
-    const onSubmit = () => {
-
+    const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        if (isLoading || email === "" || password === "") return null;
+        try {
+            setLoading(true);
+            await signInWithEmailAndPassword(auth, email, password);
+            navigate('/');
+        } catch (e) {
+            if (e instanceof FirebaseError) {
+                setError(e.message);
+            }
+        } finally {
+            setLoading(false);
+        }
     }
     return (
         <div>
@@ -44,15 +62,20 @@ export const Login = () => {
                     />
                     <button
                         name='submit'
-                        value={isLoading ? "Loading..." : "Create Account"}
+                        value={isLoading ? "Loading..." : "로그인"}
                         className='bg-indigo-600 rounded-md p-2 text-sm text-white cursor-pointer hover:opacity-70 w-full'
                     >로그인
                     </button>
 
                 </form>
                 <div className='text-red-500 mt-4 text-xs'>
-                    {error !== "" ? error : "에러없음"}
+                    {error !== "" ? error : ""}
                 </div>
+                <span className='text-xs text-gray-600'>
+                    계정이 없으신가요? {" "}
+                    <Link to="/create-account" className='text-blue-500' >계정 생성하기 &rarr;</Link>
+                </span>
+                <GithubBtn />
             </div>
         </div>
     )
