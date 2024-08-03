@@ -3,12 +3,12 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBwkSxUNYzlincH9RD-QSsB9GqdZNEqWF4",
-    authDomain: "finance-newsviewer.firebaseapp.com",
-    projectId: "finance-newsviewer",
-    storageBucket: "finance-newsviewer.appspot.com",
-    messagingSenderId: "554209465900",
-    appId: "1:554209465900:web:552e9e6451c79ed70a2389"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 
