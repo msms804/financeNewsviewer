@@ -1,8 +1,13 @@
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import React, { useState } from 'react'
 import { auth } from '../firebase';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { FirebaseError } from 'firebase/app';
+import { GithubBtn } from '../components/GithubBtn';
 
+const errors = {
+    "auth/email-already-in-use": "이미 존재하는 이메일입니다.",
+}
 export const CreateAccount = () => {
     const [isLoading, setLoading] = useState(false);
     const [name, setName] = useState("");
@@ -23,6 +28,7 @@ export const CreateAccount = () => {
     }
     const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        setError("");
         if (isLoading || name === "" || email === "" || password === "") return;
         try {
             setLoading(true);
@@ -36,9 +42,14 @@ export const CreateAccount = () => {
             })
             // 3. 홈페이지로 리다이렉트
             navigate('/');
-        } catch (error) {//생성 실패하면 이리로 옴
+        } catch (e) {//생성 실패하면 이리로 옴
             //setError
-        } finally {
+            if (e instanceof FirebaseError) {
+                // setError(e.name);
+                // console.log(e.code, e.name)
+                setError(e.message)
+            }
+        } finally {//e1bff80fee4b5bdfa5ce51de96c27ef703eacbee
             setLoading(false);
         }
         console.log(name, email, password)
@@ -84,8 +95,13 @@ export const CreateAccount = () => {
 
                 </form>
                 <div className='text-red-500 mt-4 text-xs'>
-                    {error !== "" ? error : "에러없음"}
+                    {error !== "" ? error : ""}
                 </div>
+                <span className='text-xs text-gray-600'>
+                    계정이 있으신가요? {" "}
+                    <Link to="/login" className='text-blue-500' >로그인페이지로 가기&rarr;</Link>
+                </span>
+                <GithubBtn />
             </div>
         </>
     )
