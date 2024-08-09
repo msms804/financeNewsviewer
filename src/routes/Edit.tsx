@@ -1,9 +1,19 @@
-import React from 'react'
+import React, { useState } from 'react'
+import { Search } from '../components/Search';
 
 export const Edit = () => {
+    const [showModal, setShowModal] = useState(false);
+
+    const handleOpenModal = () => {
+        setShowModal(true);
+    }
+    const handleCloseModal = () => {
+        setShowModal(false);
+    }
+
     return (
         <div>
-            <div className='flex flex-row items-center gap-1 mb-4'>
+            <div className='flex flex-row items-center gap-1 mb-4' onClick={handleOpenModal}>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.8} stroke="blue"
                     className="size-6 text-blue-400 bg-gray-100 p-1 rounded-full ">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -17,6 +27,7 @@ export const Edit = () => {
                 </div>
                 <span className='text-red-400 bg-red-100 rounded-md px-2 py-1'>삭제</span>
             </div>)}
+            <Search showModal={showModal} onClose={handleCloseModal} />
         </div>
     )
 }
