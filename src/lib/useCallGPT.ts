@@ -1,5 +1,3 @@
-import React from 'react'
-
 export const useCallGPT = async (englishText: string) => {
     console.log(">>Call GPT");
 
