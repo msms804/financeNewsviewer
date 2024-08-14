@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { EditModal } from '../components/EditModal';
-import { addDoc, collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { addDoc, collection, getDocs, limit, onSnapshot, orderBy, query, where } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { Stock } from '../components/Stock';
 import dayjs from 'dayjs';
+import { Unsubscribe } from 'firebase/auth';
 export interface IStock {
     name: string;
+    userId: string;
     id: string;
 }
 
@@ -45,24 +47,38 @@ export const Edit = () => {
         }
     }
 
-    const fetchStocks = async () => {
-        const stocksQuery = query(
-            collection(db, "myStocks"),
-            orderBy("createdAt", "desc")
-        )
-        const snapshot = await getDocs(stocksQuery)
-        const newStocks = snapshot.docs.map(doc => {
-            const { name } = doc.data();
-            return {
-                name,
-                id: doc.id,
-            }
-        })
-        setStocks(newStocks);
 
-    }
     useEffect(() => {
+        let unsubscribe: Unsubscribe | null = null;
+        const fetchStocks = async () => {
+
+            const stocksQuery = query(
+                collection(db, "myStocks"),
+                where("userId", "==", user?.uid),
+                orderBy("createdAt", "desc"),
+                limit(25)
+            )
+
+            unsubscribe = await onSnapshot(stocksQuery, (snapshot) => {//쿼리에 리스너 추가
+                const newStocks = snapshot.docs.map(doc => {
+                    const { name, userId } = doc.data();
+                    return {
+                        name,
+                        userId,
+                        id: doc.id,
+                    }
+                })
+                setStocks(newStocks);
+
+            })
+
+        }
         fetchStocks();
+        //useEffect 는 유저가 화면을 보지 않을때 값을 반환하면서 cleanup 실시
+        //Edit 컴포넌트가 마운트될때 구독, 언마운트될때 구독취소
+        return () => { //이 컴포넌트가 사용되지 않을때 이함수 호출
+            unsubscribe && unsubscribe();
+        }
     }, [])
 
     return (
