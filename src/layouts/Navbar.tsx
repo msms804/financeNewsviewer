@@ -1,9 +1,16 @@
 import React from 'react'
 import { auth } from '../firebase'
+import { useNavigate } from 'react-router-dom'
 
 export const Navbar = () => {
-    const logOut = () => {
-        auth.signOut();
+    const navigate = useNavigate();
+
+    const logOut = async () => {
+        const ok = confirm('로그아웃 하시겠습니까?')
+        if (ok) {
+            await auth.signOut();
+            navigate('/');
+        }
     }
 
     return (

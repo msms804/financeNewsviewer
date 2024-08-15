@@ -8,6 +8,7 @@ interface SearchModalProps {
 export const EditModal: React.FC<SearchModalProps> = ({ showModal, onClose }) => {
     const modalRef = useRef<HTMLDivElement | null>(null);
 
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (modalRef.current && !modalRef.current.contains(event.target as Node)) {

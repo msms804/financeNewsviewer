@@ -1,37 +1,26 @@
-import React, { useEffect, useRef } from 'react'
+import axios from 'axios';
+import React, { useEffect, useState } from 'react'
 
-interface SearchModalProps {
-    showModal: boolean;
-    onClose: () => void;
+//https://blog.naver.com/silvury/221742806582
+interface IStock {
+    stockName: string;
+    symbolCode: string;
 }
-export const Search: React.FC<SearchModalProps> = ({ showModal, onClose }) => {
-    const modalRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-                console.log("바깥누름", onClose)
-                onClose();
-            }
+export const Search = () => {
+    const [stock, setStock] = useState<IStock>();
+    useEffect(() => {//아.. 생각해보니까 이거 Edit에서 써야함..
+        const fetchStock = async () => {
+            //.. 이거 막혀잇네
+            const response = await axios.get('https://api.stock.naver.com/stock/exchange/NASDAQ/marketValue');
+            console.log(">>주식", response.data);
         }
+        //fetchStock();
+    }, [])
 
-        //모달이 열려있을 때만 이벤트 리스너 추가
-        if (showModal) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        }
-    }, [showModal, onClose])
-
-    if (!showModal) return null;
     return (
-        <div className='fixed inset-0 flex items-center justify-center bg-opacity-50'>
-            <div ref={modalRef} className='w-48 h-32 border border-gray-200'>
-                <input className='border border-gray-400 rounded-full text-xs px-2 py-1' placeholder='주식 검색' />
-            </div>
-        </div>
+        <div>
+            <input className='border border-gray-400 rounded-full text-xs px-2 py-1' placeholder='검색' />
 
+        </div>
     )
 }

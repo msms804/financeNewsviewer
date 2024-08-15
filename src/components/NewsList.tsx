@@ -37,7 +37,8 @@ interface ICategoryProps {
 }
 export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
     //const [articles, setArticles] = useState<IArticle[] | null>(null);
-    //const [loading, setLoading] = useState(false);
+    const [isLoading, setLoading] = useState(false);
+
     const [news, setNews] = useState<INews[] | null>(null);
     const [loading, response, error] = usePromise(() => {
         const query = category === 'all' ? '' : `&category=${category}`;
@@ -56,16 +57,18 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
     //     setLoading(false);
     // }
     const fetchNews = async () => {
+        setLoading(true);
         const apiKey = import.meta.env.VITE_NYTIMES_API_KEY;
         const url = `https://api.nytimes.com/svc/search/v2/articlesearch.json?q=stock&fq=news_desk:("Business")&api-key=${apiKey}`;
 
         try {
             const response = await axios.get(url);
-            console.log(response.data);//이거 없으니까 에러남;;
+            //console.log(response.data);//이거 없으니까 에러남;;
             setNews(response.data.response.docs);
         } catch (error) {
             console.error(error);
         }
+        setLoading(false);
     }
     useEffect(() => {
         //fetchData();
@@ -74,7 +77,9 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
     if (loading) return <div>대기 중...</div>
     if (error) return <div>에러 발생!</div>
     if (!response) return null;
+    if (isLoading) return <div>nyt 로딩중 ...</div>
     const { articles } = response.data;
+
     return (
         <div>
             {/* {articles.map((article: IArticle) => <NewsItem key={article.url} article={article} />)} */}

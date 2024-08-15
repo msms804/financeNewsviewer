@@ -5,10 +5,13 @@ import { auth, db } from '../firebase';
 import { Stock } from '../components/Stock';
 import dayjs from 'dayjs';
 import { Unsubscribe } from 'firebase/auth';
+import { useStockInfoFetcher } from '../lib/useStockInfoFetcher';
 export interface IStock {
     name: string;
     userId: string;
     id: string;
+    englishName: string;
+    symbol: string;
 }
 
 export const Edit = () => {
@@ -35,12 +38,18 @@ export const Edit = () => {
             return;
         }
         try {
+            const data = await useStockInfoFetcher(myStock);
+            console.log(data.englishName, data.stockSymbol);
+
             await addDoc(collection(db, "myStocks"), {
                 name: myStock,
                 createdAt: now,
                 userId: user.uid,
+                englishName: data.englishName,
+                symbol: data.stockSymbol,
             })
             console.log("입력테스트", myStock)
+
             setMyStock('');
         } catch (error) {
             console.log("db저장 실패", error)
@@ -61,11 +70,13 @@ export const Edit = () => {
 
             unsubscribe = await onSnapshot(stocksQuery, (snapshot) => {//쿼리에 리스너 추가
                 const newStocks = snapshot.docs.map(doc => {
-                    const { name, userId } = doc.data();
+                    const { name, userId, englishName, symbol } = doc.data();
                     return {
                         name,
                         userId,
                         id: doc.id,
+                        englishName,
+                        symbol,
                     }
                 })
                 setStocks(newStocks);
