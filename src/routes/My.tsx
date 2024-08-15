@@ -1,11 +1,45 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { auth } from '../firebase';
+import { collection, getDocs, limit, orderBy, query, where } from 'firebase/firestore';
+import { db } from '../firebase';
+import { IStock } from './Edit';
 
 export const My = () => {
     const navigate = useNavigate();
     const user = auth.currentUser;
     const [avatar, setAvatar] = useState(user?.photoURL);
+    const [myStocks, setMyStocks] = useState<IStock[]>([]);
+
+    //1. db에서 fetch 한다. 여기서는 실시간 할 필요 없을듯
+    //2. 일단 렌더링한다.
+    //3. 
+    useEffect(() => {
+        const fetchMyStocks = async () => {
+            //내가 저장한것만 가져와야
+            const myStocksQuery = query(
+                collection(db, "myStocks"),
+                where("userId", "==", user?.uid),
+                orderBy("createdAt", "desc"),
+                limit(25),
+            )
+            const querySnapshot = await getDocs(myStocksQuery)
+            const stocks = querySnapshot.docs.map((doc) => {
+                const { createdAt, englishName, name, symbol, userId } = doc.data();
+                return {
+                    id: doc.id,
+                    createdAt: createdAt,
+                    englishName: englishName,
+                    name: name,
+                    symbol: symbol,
+                    userId: userId,
+                }
+            })
+            setMyStocks(stocks);
+        }
+        fetchMyStocks();
+    }, [])
+
     return (
         <div className=''>
             {/* <div onClick={() => navigate('/login')}>
@@ -28,7 +62,7 @@ export const My = () => {
 
                 <div onClick={() => { navigate('/edit') }} className='bg-gray-100 p-1'>
                     <div className='flex flex-row items-center gap-1 '>
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="line-icon"><path fill="#B0B8C1" d="M12.335 5.454l-9.062 9.062-1.236 4.61-.813 3.037a.501.501 0 00.613.613l3.035-.814 4.611-1.236h.001l9.062-9.062-6.21-6.21zm9.958 1.05l-4.796-4.797a.999.999 0 00-1.414 0l-2.475 2.474 6.211 6.211 2.474-2.475a.999.999 0 000-1.414" fill-rule="evenodd" >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="line-icon"><path fill="#B0B8C1" d="M12.335 5.454l-9.062 9.062-1.236 4.61-.813 3.037a.501.501 0 00.613.613l3.035-.814 4.611-1.236h.001l9.062-9.062-6.21-6.21zm9.958 1.05l-4.796-4.797a.999.999 0 00-1.414 0l-2.475 2.474 6.211 6.211 2.474-2.475a.999.999 0 000-1.414" fillRule="evenodd" >
                         </path>
                         </svg>
                         <h1 className='text-sm font-semibold text-gray-500'>편집</h1>
