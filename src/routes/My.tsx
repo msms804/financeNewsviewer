@@ -7,6 +7,7 @@ import { IStock } from './Edit';
 import axios from 'axios';
 import { INews } from '../components/NewsList';
 import { Favicon } from '../components/Favicon';
+import { MyNewsItem } from '../components/MyNewsItem';
 
 export const My = () => {
     const navigate = useNavigate();
@@ -52,13 +53,14 @@ export const My = () => {
             setLoading(true);
             const apiKey = import.meta.env.VITE_NYTIMES_API_KEY;
             // 이거 테마를 비즈니스로 한정할 수 있나?
-            //hint : join
+
             const newMyStocks = myStocks.map(stock => {
                 return stock.englishName.split(' ')[0].replace(',', '')
             }).join(',');
             console.log(">>newMyStocks", newMyStocks);
 
-            const url = `https://api.nytimes.com/svc/search/v2/articlesearch.json?q=NVIDIA,Microsoft,apple&api-key=${apiKey}`;
+            //url에 코인베이스 들어가면 결과 박살남;;
+            const url = `https://api.nytimes.com/svc/search/v2/articlesearch.json?q=NVIDIA,Microsoft,apple,tesla&api-key=${apiKey}`;
 
             try {
                 const response = await axios.get(url);
@@ -112,7 +114,7 @@ export const My = () => {
                 </div>
             </div>
 
-            {
+            {/* {
                 news && news.map((article) => <div key={article._id} className='flex flex-col gap-1 mb-4'>
                     <div>
                         <span className='flex flex-row text-xs text-blue-500 font-bold gap-1'>{article.relatedStock.map((stock: string) => <div key={stock} className='text-xs'>{stock}</div>)}</span>
@@ -123,6 +125,9 @@ export const My = () => {
                         <span> - 3시간 전</span>
                     </div>
                 </div>)
+            } */}
+            {
+                news && news.map((article) => <MyNewsItem key={article._id} {...article} />)
             }
 
         </div>
