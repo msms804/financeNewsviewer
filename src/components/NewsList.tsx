@@ -32,7 +32,7 @@ export interface INews {
     web_url: string;
     _id: string;
     source: string;
-    relatedStock: string;
+    relatedStock: string[];
 }
 interface ICategoryProps {
     category: string;
