@@ -19,7 +19,7 @@ interface IKeyword {
     rank: number;
     major: string;
 }
-interface INews {
+export interface INews {
     abstract: string;
     headline: {
         main: string;
@@ -31,6 +31,8 @@ interface INews {
     snippet: string;
     web_url: string;
     _id: string;
+    source: string;
+    relatedStock: string;
 }
 interface ICategoryProps {
     category: string;
