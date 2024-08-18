@@ -18,6 +18,7 @@ import { auth } from './firebase';
 import ProtectedRoute from './components/ProtectedRoute';
 import { ForTest } from './components/ForTest';
 import { Edit } from './routes/Edit';
+import { NewsDetail } from './routes/NewsDetail';
 
 function App() {
   const [isLoading, setLoading] = useState(true);
@@ -49,11 +50,20 @@ function App() {
           element: <ProtectedRoute>
             <My />
           </ProtectedRoute>,
+
         },
         {
           path: 'edit',
-          element: <Edit />
-        }
+          element: <ProtectedRoute>
+            <Edit />
+          </ProtectedRoute>
+        },
+        {
+          path: "mypage/news/:newsId",
+          element: <ProtectedRoute>
+            <NewsDetail />
+          </ProtectedRoute>,
+        },
       ]
     },
     {
@@ -67,9 +77,8 @@ function App() {
     {
       path: '/nyt-test',
       element: <ForTest />
-    },
-
-  ]
+    }
+  ];
   const routing = useRoutes(routes)
   return (
 
