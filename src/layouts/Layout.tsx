@@ -5,10 +5,10 @@ import { BottomNavbar } from './BottomNavbar'
 
 export const Layout = () => {
     return (
-        <div>
+        <div className='container mx-auto px-4'>
             <Navbar />
             <Outlet />
-            <BottomNavbar />
+            {/* <BottomNavbar /> */}
         </div>
     )
 }

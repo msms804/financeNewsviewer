@@ -17,9 +17,7 @@ export const My = () => {
     const [loading, setLoading] = useState(false);
     const [news, setNews] = useState<INews[] | null>(null);
 
-    //1. db에서 fetch 한다. 여기서는 실시간 할 필요 없을듯
-    //2. 일단 렌더링한다.
-    //3. 
+
     useEffect(() => {
         const fetchMyStocks = async () => {
             //내가 저장한것만 가져와야
@@ -95,9 +93,9 @@ export const My = () => {
     if (loading) return <div>뉴스 로딩중...</div>
 
     return (
-        <div className=''>
+        <div>
 
-            <div className='flex flex-row justify-between items-center border-b border-gray-200 m-2 p-2'>
+            <div className='flex flex-row justify-between items-center border-b border-gray-200 mb-2'>
                 <div className='flex flex-row items-center justify-center'>
                     <span className='text-lg font-semibold'>{user?.displayName ?? "Anonymous"} 님이 찜한 주식뉴스</span>
                 </div>
@@ -114,20 +112,13 @@ export const My = () => {
                 </div>
             </div>
 
-            {/* {
-                news && news.map((article) => <div key={article._id} className='flex flex-col gap-1 mb-4'>
-                    <div>
-                        <span className='flex flex-row text-xs text-blue-500 font-bold gap-1'>{article.relatedStock.map((stock: string) => <div key={stock} className='text-xs'>{stock}</div>)}</span>
-                    </div>
-                    <span className='font-thin text-sm'>{article.abstract}</span>
-                    <div className='text-xs text-gray-500'>
-                        <span>{article.source}</span>
-                        <span> - 3시간 전</span>
-                    </div>
-                </div>)
-            } */}
-            {
-                news && news.map((article) => <MyNewsItem key={article._id} {...article} />)
+
+            {//이거 li태그로 바꿔야할듯..?
+                news && news.map((article) => (
+                    <MyNewsItem
+                        key={article._id}
+                        {...article}
+                    />))
             }
 
         </div>
