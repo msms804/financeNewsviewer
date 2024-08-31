@@ -1,153 +1,76 @@
-import axios from 'axios';
-import React, { useEffect, useState } from 'react'
-import { useCallGPT } from '../lib/useCallGPT';
-import { addDoc, collection } from 'firebase/firestore';
-import { db } from '../firebase';
-import { useStockInfoFetcher } from '../lib/useStockInfoFetcher';
+import React from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import axios from "axios";
 
-interface IStock {
-    symbol: string;
-    name: string;
-    exchange: string;
-}
+// fetchTranslation 함수는 이미 제공된 상태입니다.
 
+export const fetchTranslation = async ({ pageParam = 0 }: { pageParam?: number }) => {
+    const apiKey = import.meta.env.VITE_NYTIMES_API_KEY;
+    const url = `https://api.nytimes.com/svc/search/v2/articlesearch.json?q=stock&sort=newest&fq=news_desk:("Business")&page=${pageParam}&api-key=${apiKey}`;
 
-//gpt 테스트
-const englishText = "Three Days That Rocked Japan's Markets The fragility of a more-than-yearlong stock rally in Japan, fueled in part by a weak yen, has been exposed by the sudden strengthening of the currency."
+    const response = await axios.get(url);
+    const articles = response.data.response.docs;
 
-export const ForTest = () => {
-    const [message, setMessage] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [stocks, setStocks] = useState<IStock[] | null>(null);
-    //const [error, setError] = useState();
-    const [stocksText, setStocksText] = useState();
-    const [englishName, setEnglishName] = useState<string | "">("");
-    const [symbol, setSymbol] = useState<string | "">("");
+    console.log(">>", articles);
+    return articles;
+};
 
-    useEffect(() => { //여기도 에러처리 해야하나?
-        const fetchInfo = async () => {
-            const stockInfo = await useStockInfoFetcher("일라이릴리");
-            setEnglishName(stockInfo.englishName);
-            setSymbol(stockInfo.stockSymbol);
-        }
-        fetchInfo();
-    }, [])
+export const ForTest: React.FC = () => {
+    const {
+        data,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage,
+        status,
+        error,
+    } = useInfiniteQuery({
+        queryKey: ["articles"],
+        queryFn: fetchTranslation,
+        initialPageParam: 0,
+        getNextPageParam: (lastPage, pages) => {
+            return lastPage.length ? pages.length : undefined;
+        },
+        staleTime: 1000 * 60 * 60,
+        gcTime: 1000 * 60 * 120,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+    });
 
-    const handleClickGPTCall = async () => {
-        try {
-            setIsLoading(true);
-            const msg = await useCallGPT(englishText);
-            setMessage(msg)
-        } catch (error) {
-
-        } finally {
-            setIsLoading(false);
-        }
-    }
-    // const fetchNasdaqStocks = async () => {
-    //     try {
-    //         const response = await axios.get(`https://www.alphavantage.co/query?function=LISTING_STATUS&apikey=${import.meta.env.VITE_ALPHAVANTAGE_API_KEY}`)
-    //         console.log(response.data);
-
-
-
-
-
-
-    //     } catch (error) {
-
-    //     }
-    // }
-    const fetchNasdaqStocks = async () => {
-        try {
-            setIsLoading(true);
-
-            const response = await axios.get(
-                `https://www.alphavantage.co/query?function=LISTING_STATUS&apikey=${import.meta.env.VITE_ALPHAVANTAGE_API_KEY}`,
-                { responseType: 'text' } // CSV 데이터를 텍스트로 받아오기 위해 설정
-            );
-
-            const textData = response.data;
-            console.log(">>textData: ", textData)
-            setStocksText(textData);
-            const parsedData = textData
-                .split("\n")
-                .slice(1)
-                .filter((line: any) => line.trim() !== "")  // 빈 줄 필터링
-                .map((line: any) => {
-                    const columns = line.split(",");
-                    const symbol = columns[0];
-                    const name = columns[1];
-                    const exchange = columns[2];  // 수정된 열 참조
-                    return { symbol, name, exchange };
-                });
-
-            console.log(">>parsedData:", parsedData);
-            const nasdaqStocks = parsedData.filter(
-                (stock: any) => stock.exchange.trim() === "NASDAQ"
-            );
-
-            console.log(">>nasdaqStocks:", nasdaqStocks);
-
-
-            setStocks(nasdaqStocks);
-        } catch (err: any) {
-            //setError(err.message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    const saveInDB2 = async () => {
-        try {
-            if (stocksText) {
-                await addDoc(collection(db, 'stocksText'), {
-                    stocks: stocksText,
-                })
-            }
-            console.log(">> 두번째 저장성공!")
-        } catch (error) {
-            console.log(">> 두번째 저장 실패ㅠㅠ", error)
-        }
-    }
-
-    useEffect(() => {
-        console.log(">>stocks:", stocks)
-    }, [stocks])
+    if (status === "error") return <p>Error: {error.message}</p>;
+    /**
+     * 할일
+     * 1. too many request 고치고
+     * 2. 무한스크롤로 고치고(지금은 버튼 눌러야)
+     * 3. promise all 로 했을때랑 성능차 없는지?
+     * 4. useInfiniteQuery  공식문서 보고 공부..
+     * 5. 
+     */
     return (
-        <>
-            {/* <button onClick={handleClickGPTCall}>GPT API call</button> */}
-
-            <button onClick={fetchNasdaqStocks}>fetch nasdaqStocks</button>
-            {/* <div>{isLoading ? "로딩중..." : message}</div> */}
-            {/* {stocks && stocks.length > 0 && <button onClick={saveInDB}
-                className='bg-blue-300 rounded-lg p-2'
-            >firebase에 저장</button>} */}
-            {/* <button onClick={() => { useStockInfoFetcher("테슬라") }}>새로운 테스트</button> */}
-            {stocksText && <button onClick={saveInDB2}>text로 저장</button>}
-            {/* {isLoading ? (
-                <div>Loading...</div>
-            ) : (
-                <div>
-                    {error ? (
-                        <div>Error: {error}</div>
-                    ) : (
-                        <ul>
-                            {stocks?.map((stock, index) => (
-                                <li key={index}>
-                                    {stock.symbol}: {stock.name}
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </div>
-            )}         */}
-            {/* <div>isLoading : {isLoading ? "loading..." : "fin"}</div> */}
+        <div>
+            {data?.pages.map((page, pageIndex) => (
+                <React.Fragment key={pageIndex}>
+                    {page.map((article: any) => (
+                        <div key={article._id}
+                            className="m-4">
+                            <h2 className="font-semibold text-sm">{article.headline.main}</h2>
+                            <p className="text-xs">{article.snippet}</p>
+                        </div>
+                    ))}
+                </React.Fragment>
+            ))}
             <div>
-                티커 : {symbol}
+                {isFetchingNextPage ? (
+                    <p>더 불러오는중..</p>
+                ) : (
+                    <button
+                        onClick={() => fetchNextPage()}
+                        disabled={!hasNextPage || isFetchingNextPage}
+                    >
+                        Load More
+                    </button>
+                )}
             </div>
-            <div>
-                영어이름 : {englishName}
-            </div>
-        </>
+        </div>
     );
-}
+};
+
