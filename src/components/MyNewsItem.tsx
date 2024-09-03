@@ -13,7 +13,14 @@ export const MyNewsItem = ({ abstract, source, relatedStock, _id, headline }: IN
     const handleClick = () => {
         const encodedId = encodeURIComponent(_id);
         console.log("", encodedId);
-        navigate(`/mypage/news/${encodedId}`)
+        navigate(`/mypage/news/${encodedId}`, {
+            state: {
+                abstract,
+                source,
+                relatedStock,
+                headline,
+            }
+        })
     }
     useEffect(() => {
         if (!abstract || !relatedStock) return;
@@ -32,17 +39,23 @@ export const MyNewsItem = ({ abstract, source, relatedStock, _id, headline }: IN
     return (
         <div>
             <div onClick={handleClick} className='flex flex-col gap-1 mb-6 cursor-pointer'>
-                <div className='flex flex-row items-center gap-1'>
+                <div className='flex flex-row items-center gap-2'>
                     {/* <span className={`text-xs p-1 rounded-md 
                         ${isGood === "호재" ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-500'
                         } `}>{isGood}</span> */}
-
-                    <span className='flex flex-row text-xs text-gray-500 font-bold gap-1'>{relatedStock.map((stock: string) => <div key={stock} className='text-xs'>{stock}</div>)}</span>
+                    <div className='flex text-xs bg-slate-200 rounded-md p-1'>13:29</div>
+                    <div className='text-xs text-gray-500'>2024년 08월 19일 월요일</div>
                 </div>
-                <span className='font-thin text-sm'>{headline.main}</span>
+                <span className='font-semibold text-sm'>{headline.main}</span>
                 <div className='text-xs text-gray-500'>
-                    <span>{source}</span>
-                    <span> - 3시간 전</span>
+                    {/* <span>{source}</span> */}
+
+                    <span className='flex flex-row text-xs  gap-1'>
+                        {relatedStock.map((stock: string) =>
+                            <div key={stock} className='text-xs  border border-gray-300 rounded-full py-1 px-2'>
+                                {stock}
+                            </div>)}
+                    </span>
                 </div>
             </div>
         </div>
