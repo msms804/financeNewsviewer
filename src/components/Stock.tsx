@@ -34,7 +34,7 @@ export const Stock = ({ name, userId, id, englishName, symbol }: IStock) => {
                 <div className='flex flex-col'>
 
                     <div className='text-sm text-gray-800 font-semibold'>{symbol}</div>
-                    <div className='text-xs text-gray-700'>{name}</div>
+                    <div className='text-xs text-gray-700'>{englishName}</div>
                 </div>
             </div>
 
