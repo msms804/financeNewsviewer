@@ -52,7 +52,7 @@ const fetchTranslation = async ({ pageParam = 0 }: { pageParam?: number }) => {
     const response = await axios.get(url);
     const articles = response.data.response.docs;
 
-    console.log("씨이발", articles);
+    console.log(">>", articles);
     return articles;
 
 
@@ -111,6 +111,11 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
     //     setLoading(false);
     // }
     useEffect(() => {
+        if (inView) {
+            fetchNextPage();
+        }
+    }, [inView])
+    useEffect(() => {
         //fetchData();
         // fetchNews();
     }, [category])
@@ -129,15 +134,16 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
                 {data?.pages.map((page, pageIndex) => (
                     <React.Fragment key={pageIndex}>
                         {page.map((article: any) => (
-                            <div key={article._id}>
-                                <h2>{article.headline.main}</h2>
-                                <p>{article.snippet}</p>
-                            </div>
+                            // <div key={article._id}>
+                            //     <h2>{article.headline.main}</h2>
+                            //     <p>{article.snippet}</p>
+                            // </div>
+                            <NewsItem key={article._id} article={article} />
                         ))}
                     </React.Fragment>
                 ))}
 
-                <div>
+                {/* <div>
                     {isFetchingNextPage ? (
                         <p>Loading more...</p>
                     ) : (
@@ -149,9 +155,9 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
                             Load More
                         </button>
                     )}
-                </div>
+                </div> */}
                 <div>
-                    <div ref={ref}>옵저버</div>
+                    {isFetchingNextPage ? <div>로딩중...</div> : <div ref={ref}>옵저버</div>}
                 </div>
             </div>
         </div>
