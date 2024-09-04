@@ -4,7 +4,7 @@ import axios from 'axios';
 import usePromise from '../lib/usePromise';
 import { useInView } from 'react-intersection-observer';
 import { useInfiniteQuery } from '@tanstack/react-query';
-
+import _ from 'lodash';
 //import { fetchTranslation } from '../lib/fetchTranslation';
 interface IArticle {
     source: { id: string | null; name: string };
@@ -45,18 +45,36 @@ interface INewsPage {
     isLastPage: boolean;
     nextPage?: number;
 }
-const fetchTranslation = async ({ pageParam = 0 }: { pageParam?: number }) => {
+const fetchTranslationWithBackOff = async ({ pageParam = 0 }: { pageParam?: number }) => {
     const apiKey = import.meta.env.VITE_NYTIMES_API_KEY;
     const url = `https://api.nytimes.com/svc/search/v2/articlesearch.json?q=stock&sort=newest&fq=news_desk:("Business")&page=${pageParam}&api-key=${apiKey}`;
 
-    const response = await axios.get(url);
-    const articles = response.data.response.docs;
+    let retries = 3;
+    let delay = 1000;
 
-    console.log(">>", articles);
-    return articles;
+    while (retries > 0) {
+        try {
+            const response = await axios.get(url);
+            const articles = response.data.response.docs;
+            console.log(">>", articles);
+            return articles;
+
+        } catch (error: any) {
+            if (error.response.status === 429) {
+                await new Promise(res => setTimeout(res, delay));
+                retries -= 1;
+                delay *= 2;
+            } else {
+                throw error;
+            }
+        }
+    }
+    throw new Error("잠시후 다시 실행해 주세요");
+
 
 
 };
+const fetchTranslationThrottled = _.throttle(fetchTranslationWithBackOff, 5000, { trailing: false });
 export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
     //const [articles, setArticles] = useState<IArticle[] | null>(null);
     const { ref, inView } = useInView();
@@ -71,7 +89,7 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
         status
     } = useInfiniteQuery({
         queryKey: ['news', category],
-        queryFn: fetchTranslation,
+        queryFn: fetchTranslationThrottled,
         initialPageParam: 0,
         getNextPageParam: (lastPage, pages) => {
             return lastPage.length ? pages.length : undefined;
@@ -103,7 +121,6 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
 
     //     try {
     //         const response = await axios.get(url);
-    //         //console.log(response.data);//이거 없으니까 에러남;;
     //         setNews(response.data.response.docs);
     //     } catch (error) {
     //         console.error(error);
@@ -111,10 +128,10 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
     //     setLoading(false);
     // }
     useEffect(() => {
-        if (inView) {
+        if (inView && hasNextPage) {
             fetchNextPage();
         }
-    }, [inView])
+    }, [inView, hasNextPage])
     useEffect(() => {
         //fetchData();
         // fetchNews();
@@ -156,7 +173,7 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
                         </button>
                     )}
                 </div> */}
-                <div>
+                <div className='bg-red-300'>
                     {isFetchingNextPage ? <div>로딩중...</div> : <div ref={ref}>옵저버</div>}
                 </div>
             </div>
