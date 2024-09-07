@@ -1,40 +1,13 @@
 import React, { useState } from 'react'
 const categories = [
-    {
-        name: 'all',
+    {// 경제, 산업, 기업 등의 일반 비즈니스 뉴스를 다룸
+        name: 'Business',
         text: '전체보기',
     },
-    {
-        name: 'nasdaq',
+    {//미국주식과 관련된 뉴스 다룸
+        name: 'Nasdaq',
         text: '나스닥',
     },
-    {
-        name: 'snp500',
-        text: 's&p 500',
-    },
-    {
-        name: 'crypto',
-        text: '암호화폐',
-    },
-
-    // {
-    //     name: 'business',
-    //     text: '비즈니스',
-    // },
-    // {
-    //     name: 'entertainment',
-    //     text: '엔터테인먼트',
-    // },
-
-    // {
-    //     name: 'science',
-    //     text: '과학',
-    // },
-
-    // {
-    //     name: 'technology',
-    //     text: '기술',
-    // },
 ]
 interface ICategoriesProps {
     onSelect: (category: string) => void;
@@ -46,7 +19,7 @@ export const Categories: React.FC<ICategoriesProps> = ({ onSelect, category }) =
             {categories.map(c =>
                 <div
                     key={c.name}
-                    className={`text-sm ${category === c.name ? 'border-b border-blue-400' : ''}`}
+                    className={`text-xs cursor-pointer bg-gray-100 px-2 py-1 rounded-md ${category === c.name ? 'border-b border-blue-400' : ''}`}
                     onClick={() => onSelect(c.name)}
                 >{c.text}</div>)}
         </div>
