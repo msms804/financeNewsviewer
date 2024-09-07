@@ -20,7 +20,6 @@ export const My = () => {
 
     useEffect(() => {
         const fetchMyStocks = async () => {
-            //내가 저장한것만 가져와야
             const myStocksQuery = query(
                 collection(db, "myStocks"),
                 where("userId", "==", user?.uid),
@@ -46,22 +45,22 @@ export const My = () => {
 
 
     useEffect(() => {//기사를 최근 3일치만 가져오면 될듯
-        const fetchNews = async () => {
-            if (!myStocks) return;
-            setLoading(true);
+        const fetchNews = async (symbols: string[]) => {
+            // if (!myStocks) return;
+            // setLoading(true);
             const apiKey = import.meta.env.VITE_NYTIMES_API_KEY;
-            // 이거 테마를 비즈니스로 한정할 수 있나?
+            const query = symbols.join(',');
+            console.log(">> 쿼리", query)
+            // const newMyStocks = myStocks.map(stock => {
+            //     return stock.englishName.split(' ')[0].replace(',', '')
+            // }).join(',');
+            // console.log(">>newMyStocks", newMyStocks);
 
-            const newMyStocks = myStocks.map(stock => {
-                return stock.englishName.split(' ')[0].replace(',', '')
-            }).join(',');
-            console.log(">>newMyStocks", newMyStocks);
-
-            //url에 코인베이스 들어가면 결과 박살남;;
-            const url = `https://api.nytimes.com/svc/search/v2/articlesearch.json?q=NVIDIA,Microsoft,apple,tesla&api-key=${apiKey}`;
+            const url = `https://api.nytimes.com/svc/search/v2/articlesearch.json?fq=news_desk:("Business")&q=${query}&api-key=${apiKey}`;
 
             try {
                 const response = await axios.get(url);
+                console.log(">>", response.data);
 
                 // relatedStock, article을 새로운 배열로 만들기
                 const newsWithStocks = response.data.response.docs.map((article: any) => {
@@ -70,6 +69,7 @@ export const My = () => {
                         return article.keywords.some((keyword: any) =>
                             (keyword.name === "organizations" || keyword.name === "subject") &&
                             keyword.value.includes(stock.englishName.split(' ')[0].replace(',', ''))
+                            //여기서 replace에서 .도 공백으로 바꿔야할듯..? ex) amazon.com
                         )
                     })
                     console.log("관련주식 ", relatedStocks);
@@ -79,14 +79,32 @@ export const My = () => {
                     }
                 })
                 console.log(">> 확인", newsWithStocks)
-                setNews(newsWithStocks);
-                console.log(">> 테슬라뉴스, 애플뉴스 : ", response.data)
+                return newsWithStocks;
             } catch (error) {
                 console.error(error);
             }
+            // setLoading(false);
+        }
+        // 배치처리
+        const fetchNewsForStock = async () => {
+            if (!myStocks || myStocks.length === 0) return;
+            setLoading(true);
+
+            const symbols = myStocks.map((stock) => stock.englishName.split(' ')[0].replace(',', ''))
+            const batchSize = 3;
+            let allNews: INews[] = [];
+
+            for (let i = 0; i < symbols.length; i += batchSize) {
+                const batchSymbols = symbols.slice(i, i + batchSize);
+                const stockNews: INews[] = await fetchNews(batchSymbols);
+                allNews = [...allNews, ...stockNews];
+            }
+            console.log(">> 머임 ;;", allNews);
+            setNews(allNews);
             setLoading(false);
         }
-        fetchNews();
+        fetchNewsForStock();
+        // fetchNews(["apple", "microsoft", "amazon", "tesla", "meta"])
     }, [myStocks])
 
     //gpt로 변환
