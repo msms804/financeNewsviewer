@@ -45,18 +45,32 @@ interface INewsPage {
     isLastPage: boolean;
     nextPage?: number;
 }
-const fetchTranslationWithBackOff = async ({ pageParam = 0 }: { pageParam?: number }) => {
+//전체보기, 해외증시, 암호화폐, 환율/금리
+const fetchTranslationWithBackOff = async ({ pageParam = 0, category }: { pageParam?: number, category: string }) => {
     const apiKey = import.meta.env.VITE_NYTIMES_API_KEY;
-    const url = `https://api.nytimes.com/svc/search/v2/articlesearch.json?q=stock&sort=newest&fq=news_desk:("Business")&page=${pageParam}&api-key=${apiKey}`;
 
+
+
+    let url = `https://api.nytimes.com/svc/search/v2/articlesearch.json?sort=newest&page=${pageParam}&api-key=${apiKey}`;
+
+    switch (category) {
+        case 'Business':
+            url += '&fq=news_desk:("Business")';
+            break;
+        case 'Nasdaq':
+            url += '&q="nasdaq"';
+            break;
+        default:
+            url += '&fq=news_desk:("Business")';
+            break;
+    }
     let retries = 3;
     let delay = 1000;
-
     while (retries > 0) {
         try {
             const response = await axios.get(url);
             const articles = response.data.response.docs;
-            console.log(">>", articles);
+            console.log(">> page : ", pageParam, ">>", articles);
             return articles;
 
         } catch (error: any) {
@@ -89,7 +103,7 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
         status
     } = useInfiniteQuery({
         queryKey: ['news', category],
-        queryFn: fetchTranslationThrottled,
+        queryFn: ({ pageParam = 0 }) => fetchTranslationThrottled({ pageParam, category }), // category 전달        initialPageParam: 0,
         initialPageParam: 0,
         getNextPageParam: (lastPage, pages) => {
             return lastPage.length ? pages.length : undefined;
@@ -101,32 +115,7 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
     const [isLoading, setLoading] = useState(false);
 
     const [news, setNews] = useState<INews[] | null>(null);
-    // const [loading, response, error] = usePromise(() => {
-    //     const query = category === 'all' ? '' : `&category=${category}`;
-    //     return axios.get(`https://newsapi.org/v2/top-headlines?country=kr${query}&apiKey=${import.meta.env.VITE_NEWS_API_KEY}`)
-    // }, category)
 
-    // useEffect(() => {
-    //     if (inView && hasNextPage) {
-    //         console.log("다음페이지!")
-    //         fetchNextPage();
-
-    //         console.log("페이지", data);
-    //     }
-    // }, [inView, hasNextPage, fetchNextPage])
-    // const fetchNews = async () => {
-    //     setLoading(true);
-    //     const apiKey = import.meta.env.VITE_NYTIMES_API_KEY;
-    //     const url = `https://api.nytimes.com/svc/search/v2/articlesearch.json?q=stock&sort=newest&fq=news_desk:("Business")&page=2&api-key=${apiKey}`;
-
-    //     try {
-    //         const response = await axios.get(url);
-    //         setNews(response.data.response.docs);
-    //     } catch (error) {
-    //         console.error(error);
-    //     }
-    //     setLoading(false);
-    // }
     useEffect(() => {
         if (inView && hasNextPage) {
             fetchNextPage();
@@ -136,43 +125,19 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
         //fetchData();
         // fetchNews();
     }, [category])
-    // if (loading) return <div>대기 중...</div>
+
     if (error) return <div>에러 발생! {error.message}</div>
-    // if (!response) return null;
-    //if (isFetching) return <div>nyt 로딩중 ...</div>
-    // const { articles } = response.data;
 
     return (
         <div>
-            {/* {articles.map((article: IArticle) => <NewsItem key={article.url} article={article} />)} */}
-            {/* {news && news.map((item: INews) => <NewsItem key={item._id} news={item} />)} */}
-            {/* <div ref={ref} className='bg-blue-200'>옵저버</div> */}
             <div>
                 {data?.pages.map((page, pageIndex) => (
                     <React.Fragment key={pageIndex}>
                         {page.map((article: any) => (
-                            // <div key={article._id}>
-                            //     <h2>{article.headline.main}</h2>
-                            //     <p>{article.snippet}</p>
-                            // </div>
                             <NewsItem key={article._id} article={article} />
                         ))}
                     </React.Fragment>
                 ))}
-
-                {/* <div>
-                    {isFetchingNextPage ? (
-                        <p>Loading more...</p>
-                    ) : (
-                        <button
-                            className='cursor-pointer'
-                            onClick={() => { fetchNextPage() }}
-                            disabled={!hasNextPage || isFetchingNextPage}
-                        >
-                            Load More
-                        </button>
-                    )}
-                </div> */}
                 <div className='bg-red-300'>
                     {isFetchingNextPage ? <div>로딩중...</div> : <div ref={ref}>옵저버</div>}
                 </div>
