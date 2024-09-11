@@ -3,37 +3,26 @@ import dayjs from 'dayjs'
 import { useCallGPT } from '../lib/useCallGPT';
 import 'dayjs/locale/ko';
 import { useTranslateWithGPT } from '../lib/useTranslateWithGPT';
+import { useFormattedDateTime } from '../lib/useFormattedDateTime';
 
-export const NewsItem = ({ article }: any) => {//article로 바꾸고싶음
-    const [date, setDate] = useState('');
-    const [time, setTime] = useState('');
+export const NewsItem = ({ article }: any) => {
     const [newHeadline, setNewHeadline] = useState('');
     const [newSnippet, setNewSnippet] = useState('');
-    const translatedHeadline = useTranslateWithGPT(article._id);
-    const translatedSnippet = useTranslateWithGPT(article._id);
+    const translateWithGPT = useTranslateWithGPT(article._id);
+    const { date, time } = useFormattedDateTime(article.pub_date)
 
     //번역
     useEffect(() => {
         const translatedArticle = async () => {
-            const headline = await translatedHeadline(article.headline.main);
-            const snippet = await translatedSnippet(article.snippet);
-            console.log(">> 헤드라인", headline);
-            console.log(">> 요약", snippet);
+            const { headline, snippet } = await translateWithGPT(article.headline.main, article.snippet);
+            // console.log(">> 헤드라인", headline);
+            // console.log(">> 요약", snippet);
             setNewHeadline(headline);
             setNewSnippet(snippet);
         }
         if (article) {
             translatedArticle();
         }
-    }, [article])
-
-    useEffect(() => {
-        dayjs.locale("ko");
-        const datetime = dayjs(article.pub_date);
-        const datePart = datetime.format('YYYY년 MM월 DD일 dddd');
-        const timePart = datetime.format('HH:mm');
-        setDate(datePart);
-        setTime(timePart);
     }, [article])
 
     return (
