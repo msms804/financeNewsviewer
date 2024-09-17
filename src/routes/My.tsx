@@ -8,108 +8,107 @@ import axios from 'axios';
 import { INews } from '../components/NewsList';
 import { Favicon } from '../components/Favicon';
 import { MyNewsItem } from '../components/MyNewsItem';
+import { useQuery } from '@tanstack/react-query';
+import dayjs from 'dayjs';
+import { useDate } from '../lib/useDate';
 
+const fetchNews = async (symbols: string[], myStocks: any, beginDate: string, endDate: string) => {
+    const apiKey = import.meta.env.VITE_NYTIMES_API_KEY;
+    const query = symbols.join(',');
+    console.log(">> 쿼리", query)
+
+    const url = `https://api.nytimes.com/svc/search/v2/articlesearch.json?fq=news_desk:("Business")&sort=newest&begin_date=${beginDate}&end_date=${endDate}&q=${query}&api-key=${apiKey}`;
+
+    try {
+        const response = await axios.get(url);
+        console.log(">>", response.data);
+
+        // relatedStock, article을 새로운 배열로 만들기
+        const newsWithStocks = response.data.response.docs.map((article: any) => {
+
+            const relatedStocks = myStocks.filter((stock: any) => {
+                return article.keywords.some((keyword: any) =>
+                    (keyword.name === "organizations" || keyword.name === "subject") &&
+                    keyword.value.includes(stock.englishName.split(' ')[0].replace(',', ''))
+                    //여기서 replace에서 .도 공백으로 바꿔야할듯..? ex) amazon.com
+                )
+            })
+            console.log("관련주식 ", relatedStocks);
+            return {
+                ...article,
+                relatedStock: relatedStocks.map((stock: any) => stock.symbol),
+            }
+        })
+        console.log(">> 확인", newsWithStocks)
+        return newsWithStocks;
+    } catch (error) {
+        console.error(error);
+    }
+    // setLoading(false);
+}
+// 배치처리
+const fetchNewsForStock = async (myStocks: any, beginDate: string, endDate: string) => {
+    if (!myStocks || myStocks.length === 0) return;
+
+    const symbols = myStocks.map((stock: any) => stock.englishName.split(' ')[0].replace(',', ''))
+    const batchSize = 5;
+    let allNews: INews[] = [];
+
+    for (let i = 0; i < symbols.length; i += batchSize) {
+        const batchSymbols = symbols.slice(i, i + batchSize);
+        const stockNews: INews[] = await fetchNews(batchSymbols, myStocks, beginDate, endDate);
+        allNews = [...allNews, ...stockNews];
+    }
+    console.log(">>", allNews);
+    return allNews;
+}
 export const My = () => {
     const navigate = useNavigate();
     const user = auth.currentUser;
-    const [avatar, setAvatar] = useState(user?.photoURL);
     const [myStocks, setMyStocks] = useState<IStock[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [news, setNews] = useState<INews[] | null>(null);
+    const { beginDate, endDate } = useDate(14);  //이거 없애ㅎ야 할듯
+    const { data: news, isLoading, error } = useQuery({
+        queryKey: ["myNews", myStocks, beginDate, endDate],
+        queryFn: () => fetchNewsForStock(myStocks, beginDate as string, endDate as string),
+        enabled: !!myStocks && myStocks.length > 0,
+        refetchOnWindowFocus: false,
+        staleTime: 1000 * 60 * 60 * 6,
+        gcTime: 1000 * 60 * 60 * 12,
 
+    })
 
     useEffect(() => {
         const fetchMyStocks = async () => {
-            const myStocksQuery = query(
-                collection(db, "myStocks"),
-                where("userId", "==", user?.uid),
-                orderBy("createdAt", "desc"),
-                limit(25),
-            )
-            const querySnapshot = await getDocs(myStocksQuery)
-            const stocks = querySnapshot.docs.map((doc) => {
-                const { createdAt, englishName, name, symbol, userId } = doc.data();
-                return {
-                    id: doc.id,
-                    createdAt: createdAt,
-                    englishName: englishName,
-                    name: name,
-                    symbol: symbol,
-                    userId: userId,
-                }
-            })
-            setMyStocks(stocks);
+            try {
+                const myStocksQuery = query(
+                    collection(db, "myStocks"),
+                    where("userId", "==", user?.uid),
+                    orderBy("createdAt", "desc"),
+                    limit(25),
+                )
+                const querySnapshot = await getDocs(myStocksQuery)
+
+                const stocks = querySnapshot.docs.map((doc) => {
+                    const { createdAt, englishName, name, symbol, userId } = doc.data();
+                    return {
+                        id: doc.id,
+                        createdAt: createdAt,
+                        englishName: englishName,
+                        name: name,
+                        symbol: symbol,
+                        userId: userId,
+                    }
+                })
+                setMyStocks(stocks);
+            } catch (error) {
+                console.error("firestore 쿼리 에러", error);
+            }
         }
         fetchMyStocks();
     }, [])
 
-
-    useEffect(() => {//기사를 최근 3일치만 가져오면 될듯
-        const fetchNews = async (symbols: string[]) => {
-            // if (!myStocks) return;
-            // setLoading(true);
-            const apiKey = import.meta.env.VITE_NYTIMES_API_KEY;
-            const query = symbols.join(',');
-            console.log(">> 쿼리", query)
-            // const newMyStocks = myStocks.map(stock => {
-            //     return stock.englishName.split(' ')[0].replace(',', '')
-            // }).join(',');
-            // console.log(">>newMyStocks", newMyStocks);
-
-            const url = `https://api.nytimes.com/svc/search/v2/articlesearch.json?fq=news_desk:("Business")&q=${query}&api-key=${apiKey}`;
-
-            try {
-                const response = await axios.get(url);
-                console.log(">>", response.data);
-
-                // relatedStock, article을 새로운 배열로 만들기
-                const newsWithStocks = response.data.response.docs.map((article: any) => {
-
-                    const relatedStocks = myStocks.filter((stock: any) => {
-                        return article.keywords.some((keyword: any) =>
-                            (keyword.name === "organizations" || keyword.name === "subject") &&
-                            keyword.value.includes(stock.englishName.split(' ')[0].replace(',', ''))
-                            //여기서 replace에서 .도 공백으로 바꿔야할듯..? ex) amazon.com
-                        )
-                    })
-                    console.log("관련주식 ", relatedStocks);
-                    return {
-                        ...article,
-                        relatedStock: relatedStocks.map(stock => stock.symbol),
-                    }
-                })
-                console.log(">> 확인", newsWithStocks)
-                return newsWithStocks;
-            } catch (error) {
-                console.error(error);
-            }
-            // setLoading(false);
-        }
-        // 배치처리
-        const fetchNewsForStock = async () => {
-            if (!myStocks || myStocks.length === 0) return;
-            setLoading(true);
-
-            const symbols = myStocks.map((stock) => stock.englishName.split(' ')[0].replace(',', ''))
-            const batchSize = 3;
-            let allNews: INews[] = [];
-
-            for (let i = 0; i < symbols.length; i += batchSize) {
-                const batchSymbols = symbols.slice(i, i + batchSize);
-                const stockNews: INews[] = await fetchNews(batchSymbols);
-                allNews = [...allNews, ...stockNews];
-            }
-            console.log(">> 머임 ;;", allNews);
-            setNews(allNews);
-            setLoading(false);
-        }
-        fetchNewsForStock();
-        // fetchNews(["apple", "microsoft", "amazon", "tesla", "meta"])
-    }, [myStocks])
-
-    //gpt로 변환
-    if (loading) return <div>뉴스 로딩중...</div>
-
+    if (isLoading) return <div>리액트쿼리 로딩중...</div>
+    if (error) return <div>리액트쿼리 에러! {error.message}</div>
     return (
         <div>
 
@@ -131,7 +130,7 @@ export const My = () => {
             </div>
 
 
-            {//이거 li태그로 바꿔야할듯..?
+            {
                 news && news.map((article) => (
                     <MyNewsItem
                         key={article._id}
