@@ -5,7 +5,8 @@ import usePromise from '../lib/usePromise';
 import { useInView } from 'react-intersection-observer';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import _ from 'lodash';
-//import { fetchTranslation } from '../lib/fetchTranslation';
+import { useDate } from '../lib/useDate';
+
 interface IArticle {
     source: { id: string | null; name: string };
     author: string | null;
@@ -40,18 +41,14 @@ export interface INews {
 interface ICategoryProps {
     category: string;
 }
-interface INewsPage {
-    articles: INews[];
-    isLastPage: boolean;
-    nextPage?: number;
-}
+
 //전체보기, 해외증시, 암호화폐, 환율/금리
-const fetchTranslationWithBackOff = async ({ pageParam = 0, category }: { pageParam?: number, category: string }) => {
+const fetchTranslationWithBackOff = async ({ pageParam = 0, category, beginDate, endDate }: { pageParam?: number, category: string, beginDate: string, endDate: string }) => {
     const apiKey = import.meta.env.VITE_NYTIMES_API_KEY;
 
 
 
-    let url = `https://api.nytimes.com/svc/search/v2/articlesearch.json?sort=newest&page=${pageParam}&api-key=${apiKey}`;
+    let url = `https://api.nytimes.com/svc/search/v2/articlesearch.json?sort=newest&begin_date=${beginDate}&end_date=${endDate}&page=${pageParam}&api-key=${apiKey}`;
 
     switch (category) {
         case 'Business':
@@ -90,9 +87,8 @@ const fetchTranslationWithBackOff = async ({ pageParam = 0, category }: { pagePa
 };
 const fetchTranslationThrottled = _.throttle(fetchTranslationWithBackOff, 5000, { trailing: false });
 export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
-    //const [articles, setArticles] = useState<IArticle[] | null>(null);
     const { ref, inView } = useInView();
-
+    const { beginDate, endDate } = useDate(14);
     const {
         data,
         error,
@@ -102,8 +98,16 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
         isFetchingNextPage,
         status
     } = useInfiniteQuery({
-        queryKey: ['news', category],
-        queryFn: ({ pageParam = 0 }) => fetchTranslationThrottled({ pageParam, category }), // category 전달        initialPageParam: 0,
+        queryKey: ['news', category, beginDate, endDate],
+        queryFn: ({ pageParam = 0 }) => {
+            //null이 아닌경우에만 실행
+            if (beginDate && endDate) {
+                return fetchTranslationThrottled({ pageParam, category, beginDate, endDate })
+            }
+            else {
+                return Promise.reject(new Error("날짜가 유효하지 않습니다."));
+            }
+        },
         initialPageParam: 0,
         getNextPageParam: (lastPage, pages) => {
             return lastPage.length ? pages.length : undefined;
@@ -111,9 +115,6 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
         refetchOnWindowFocus: false,
         refetchOnMount: false,
     });
-
-    const [isLoading, setLoading] = useState(false);
-
     const [news, setNews] = useState<INews[] | null>(null);
 
     useEffect(() => {
@@ -121,10 +122,7 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
             fetchNextPage();
         }
     }, [inView, hasNextPage])
-    useEffect(() => {
-        //fetchData();
-        // fetchNews();
-    }, [category])
+
 
     if (error) return <div>에러 발생! {error.message}</div>
 
@@ -139,7 +137,7 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
                     </React.Fragment>
                 ))}
                 <div className='bg-red-300'>
-                    {isFetchingNextPage ? <div>로딩중...</div> : <div ref={ref}>옵저버</div>}
+                    {isFetchingNextPage && hasNextPage ? <div>로딩중...</div> : <div ref={ref}>옵저버</div>}
                 </div>
             </div>
         </div>
