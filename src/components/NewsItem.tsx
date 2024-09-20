@@ -4,6 +4,7 @@ import { useCallGPT } from '../lib/useCallGPT';
 import 'dayjs/locale/ko';
 import { useTranslateWithGPT } from '../lib/useTranslateWithGPT';
 import { useFormattedDateTime } from '../lib/useFormattedDateTime';
+import { NewsSkeleton } from './NewsSkeleton';
 
 export const NewsItem = ({ article }: any) => {
     const [newHeadline, setNewHeadline] = useState('');
@@ -26,26 +27,32 @@ export const NewsItem = ({ article }: any) => {
     }, [article])
 
     return (
-        <div className='flex flex-col mb-6'>
+        <div>
+            {(newHeadline && newSnippet)
+                ?
+                <div className='flex flex-col mb-6'>
 
-            <div className='flex flex-row items-center gap-2 mb-1'>
-                <span className='flex text-xs bg-slate-200 rounded-md p-1'>
-                    {time}
-                </span>
-                <div className='text-xs text-gray-500'>{date}</div>
+                    <div className='flex flex-row items-center gap-2 mb-1'>
+                        <span className='flex text-xs bg-slate-200 rounded-md p-1'>
+                            {time}
+                        </span>
+                        <div className='text-xs text-gray-500'>{date}</div>
 
-            </div>
+                    </div>
 
-            <div className='flex flex-row'>
-                <div className=''>
-                    {/* <div className='font-semibold text-sm mb-1'>{article.headline.main}</div> */}
-                    <div className='font-semibold text-sm mb-1'>{newHeadline}</div>
-                    {/* <div className='text-xs font-light'>{article.snippet}</div> */}
-                    <div className='text-xs font-light'>{newSnippet}</div>
+                    <div className='flex flex-row'>
+                        <div className=''>
+                            {/* <div className='font-semibold text-sm mb-1'>{article.headline.main}</div> */}
+                            <div className='font-semibold text-sm mb-1'>{newHeadline}</div>
+                            {/* <div className='text-xs font-light'>{article.snippet}</div> */}
+                            <div className='text-xs font-light'>{newSnippet}</div>
+                        </div>
+
+                    </div>
+
                 </div>
-
-            </div>
-
+                : <NewsSkeleton />
+            }
         </div>
     )
 }
