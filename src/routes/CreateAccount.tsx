@@ -8,7 +8,7 @@ import { GithubBtn } from '../components/GithubBtn';
 const errors = {
     "auth/email-already-in-use": "이미 존재하는 이메일입니다.",
 }
-export const CreateAccount = () => {
+const CreateAccount = () => {
     const [isLoading, setLoading] = useState(false);
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
@@ -106,3 +106,4 @@ export const CreateAccount = () => {
         </>
     )
 }
+export default CreateAccount;

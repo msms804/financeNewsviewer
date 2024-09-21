@@ -3,8 +3,8 @@ import { useState, useCallback } from 'react'
 import { Categories } from '../components/Categories'
 import { NewsList } from '../components/NewsList'
 import { Notice } from '../components/Notice'
-export const Home = () => {
-    const [category, setCategory] = useState<string>('all');
+const Home = () => {
+    const [category, setCategory] = useState<string>('Business');
     const onSelect = useCallback((category: string) => {
         setCategory(category)
         console.log('카테고리', category);
@@ -20,3 +20,4 @@ export const Home = () => {
         </div>
     )
 }
+export default Home;

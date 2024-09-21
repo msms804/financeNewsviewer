@@ -6,7 +6,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { auth } from '../firebase';
 import { GithubBtn } from '../components/GithubBtn';
 
-export const Login = () => {
+const Login = () => {
     const [isLoading, setLoading] = useState(false);
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -80,3 +80,4 @@ export const Login = () => {
         </div>
     )
 }
+export default Login;
