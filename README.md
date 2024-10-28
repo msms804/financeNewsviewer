@@ -28,4 +28,5 @@
 * useCallback, 으로 메모이제이션
 * API 캐싱 이용하여 API 호출수 감소(staleTime , gcTime)
 * 스크롤시 redux에  전역상태로 번역된 기사 저장하여 openai api 호출 줄임
-* 무한스크롤시 throttle, backoff 적용하여 사용자 경험 개선(rate limit이 있어서)
+* 뉴욕타임스API는 1분당 5회 요청제한이 있으므로 사용자가 빠르게 스크롤시 429오류(Too Many Requests)발생
+  * throttle, backoff 적용하여 API요청 수 제한, 사용자 경험 개선
