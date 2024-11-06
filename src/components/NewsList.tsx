@@ -1,22 +1,22 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { NewsItem } from './NewsItem'
 import axios from 'axios';
-import usePromise from '../lib/usePromise';
 import { useInView } from 'react-intersection-observer';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import _ from 'lodash';
 import { useDate } from '../lib/useDate';
+import { Loading } from './Loading';
 
-interface IArticle {
-    source: { id: string | null; name: string };
-    author: string | null;
-    title: string;
-    description: string;
-    url: string;
-    urlToImage: string;
-    publishedAt: string;
-    content: string;
-}
+// interface IArticle {
+//     source: { id: string | null; name: string };
+//     author: string | null;
+//     title: string;
+//     description: string;
+//     url: string;
+//     urlToImage: string;
+//     publishedAt: string;
+//     content: string;
+// }
 interface IKeyword {
     name: string;
     value: string;
@@ -94,9 +94,7 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
         error,
         fetchNextPage,
         hasNextPage,
-        isFetching,
         isFetchingNextPage,
-        status
     } = useInfiniteQuery({
         queryKey: ['news', category, beginDate, endDate],
         queryFn: ({ pageParam = 0 }) => {
@@ -115,7 +113,7 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
         refetchOnWindowFocus: false,
         refetchOnMount: false,
     });
-    const [news, setNews] = useState<INews[] | null>(null);
+    //const [news, setNews] = useState<INews[] | null>(null);
 
     useEffect(() => {
         if (inView && hasNextPage) {
@@ -136,8 +134,11 @@ export const NewsList: React.FC<ICategoryProps> = ({ category }) => {
                         ))}
                     </React.Fragment>
                 ))}
-                <div className='bg-red-300'>
-                    {isFetchingNextPage && hasNextPage ? <div>로딩중...</div> : <div ref={ref}>옵저버</div>}
+                <div className='flex justify-center items-center'>
+                    {isFetchingNextPage && hasNextPage
+                        ? <Loading />
+                        : <div ref={ref}>옵저버</div>
+                    }
                 </div>
             </div>
         </div>
