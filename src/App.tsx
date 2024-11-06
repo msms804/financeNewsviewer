@@ -34,10 +34,6 @@ function App() {
           path: "",
           element: <Home />,
         },
-        // {
-        //   path: "news",
-        //   element: <News />,
-        // },
         {
           path: "mypage",
           element: <ProtectedRoute>
@@ -72,7 +68,7 @@ function App() {
   return (
 
     <>
-      <div className='container mx-auto lg:px-16'>
+      <div className='container mx-auto lg:px-64'>
 
         {isLoading ? <LoadingScreen /> : <Suspense fallback={<LoadingScreen />}>{routing}</Suspense>}
 
